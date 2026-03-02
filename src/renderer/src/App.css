@@ -354,6 +354,43 @@ body {
 }
 .araxis-btn:hover { color: var(--accent); border-color: var(--accent); }
 
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 8px 0 0;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.back-btn:hover { text-decoration: underline; }
+
+.commit-hash-btn {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.commit-hash-btn:hover { text-decoration: underline; }
+.commit-hash-btn--copied { color: var(--green) !important; }
+
+.commit-filepath {
+  color: var(--subtext) !important;
+  font-weight: normal !important;
+  border-left: 1px solid var(--border);
+  padding-left: 10px;
+  margin-left: 2px;
+}
+
+.commit-summary {
+  flex: 1;
+  font-size: 12px;
+  color: var(--subtext);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+
 .diff-content {
   flex: 1;
   min-height: 0;    /* prevent flex item from expanding beyond available space */
@@ -368,6 +405,19 @@ body {
 .diff-content .d2h-wrapper        { background: transparent; }
 .diff-content .d2h-file-wrapper   { background: var(--surface); border: none; border-radius: 0; margin: 0; }
 .diff-content .d2h-file-header    { display: none; }
+.diff-content--commit .d2h-file-header {
+  display: flex;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  color: var(--text);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
 .diff-content .d2h-diff-table     { background: var(--surface); width: 100%; }
 .diff-content .d2h-code-linenumber {
   background: var(--panel);

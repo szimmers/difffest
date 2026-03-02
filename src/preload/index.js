@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('api', {
   push:        (repoPath)                    => ipcRenderer.invoke('git:push',       repoPath),
   openAraxis:  (repoPath, filePath, staged)  => ipcRenderer.invoke('git:openAraxis', repoPath, filePath, staged),
   getBlame:    (repoPath, filePath)          => ipcRenderer.invoke('git:blame',      repoPath, filePath),
+  gitShow:     (repoPath, hash)             => ipcRenderer.invoke('git:show',       repoPath, hash),
   showFileMenu:(repoPath, filePath)          => ipcRenderer.invoke('git:fileMenu',   repoPath, filePath),
   watch:       (repoPath)                    => ipcRenderer.invoke('git:watch',      repoPath),
   unwatch:     (repoPath)                    => ipcRenderer.invoke('git:unwatch',    repoPath),

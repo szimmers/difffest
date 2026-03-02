@@ -52,7 +52,7 @@ npm run build
 
 | Shortcut | Action |
 |---|---|
-| ⌘1–4 | Switch to repo 1–4 |
+| ⌘1–9 | Switch to repo 1–9 |
 | ⌘R | Refresh active repo status |
 | ⌘↵ | Commit staged changes |
 

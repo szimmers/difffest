@@ -59,6 +59,8 @@ export default function App() {
   const [diff, setDiff]                 = useState('')
   const [blameOn, setBlameOn]           = useState(false)
   const [blameData, setBlameData]       = useState([])
+  const [commitView, setCommitView]     = useState(null)  // { hash, summary }
+  const [commitDiff, setCommitDiff]     = useState('')
   const [commitMessage, setCommitMessage] = useState('')
   const [busy, setBusy]                 = useState(false)
   const [toast, setToast]               = useState(null)
@@ -113,7 +115,7 @@ export default function App() {
   // ⌘1–4 / ⌘R
   useEffect(() => {
     const handler = (e) => {
-      if (e.metaKey && /^[1-4]$/.test(e.key)) {
+      if (e.metaKey && /^[1-9]$/.test(e.key)) {
         const repo = repos[parseInt(e.key) - 1]
         if (repo) setActiveRepo(repo)
       }
@@ -178,6 +180,12 @@ export default function App() {
     window.addEventListener('mousemove', move)
     window.addEventListener('mouseup', up)
   }
+
+  const handleSelectFile = useCallback((file) => {
+    setCommitView(null)
+    setCommitDiff('')
+    setSelectedFile(file)
+  }, [])
 
   // ─── Workspace handlers ──────────────────────────────────────────────────────
   const handleAddWorkspace = useCallback(async () => {
@@ -261,10 +269,12 @@ export default function App() {
     } finally { setBusy(false) }
   }, [activeRepo, showToast, refreshStatus])
 
-  const handleBlameHashClick = useCallback((hash, summary) => {
-    navigator.clipboard.writeText(hash)
-    showToast('success', `Copied ${hash} — ${summary}`)
-  }, [showToast])
+  const handleBlameHashClick = useCallback(async (hash, summary) => {
+    const result = await window.api.gitShow(activeRepo.path, hash)
+    if (!result?.ok) { showToast('error', result?.error || 'git show failed'); return }
+    setCommitDiff(result.raw)
+    setCommitView({ hash, summary, filePath: selectedFile?.path })
+  }, [activeRepo, selectedFile, showToast])
 
   const handleOpenAraxis = useCallback(async () => {
     if (!selectedFile) return
@@ -295,7 +305,7 @@ export default function App() {
         staged={status.staged}
         unstaged={status.unstaged}
         selectedFile={selectedFile}
-        onSelectFile={setSelectedFile}
+        onSelectFile={handleSelectFile}
         onStage={handleStage}
         onUnstage={handleUnstage}
         onStageAll={handleStageAll}
@@ -315,6 +325,9 @@ export default function App() {
           blameData={blameData}
           onToggleBlame={() => setBlameOn(v => !v)}
           onBlameHashClick={handleBlameHashClick}
+          commitView={commitView}
+          commitDiff={commitDiff}
+          onClearCommitView={() => { setCommitView(null); setCommitDiff('') }}
         />
         <CommitPanel
           message={commitMessage}

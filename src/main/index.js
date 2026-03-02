@@ -317,6 +317,18 @@ ipcMain.handle('git:fileMenu', (_, repoPath, filePath) => {
   })
 })
 
+// ─── IPC: Show commit ────────────────────────────────────────────────────────
+
+ipcMain.handle('git:show', async (_, repoPath, hash) => {
+  try {
+    const git = simpleGit(repoPath)
+    const raw = await git.show([hash])
+    return { ok: true, raw }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
 // ─── IPC: Blame ──────────────────────────────────────────────────────────────
 
 ipcMain.handle('git:blame', async (_, repoPath, filePath) => {

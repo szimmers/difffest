@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useState } from 'react'
 import { html as toDiffHtml } from 'diff2html'
 import hljs from 'highlight.js/lib/core'
 import jsonLang from 'highlight.js/lib/languages/json'
@@ -39,25 +39,39 @@ function BlameView({ lines, onHashClick }) {
 }
 
 /**
- * Renders either a diff2html diff or a git blame view for the selected file.
+ * Renders either a diff2html diff, a git blame view, or a full commit diff.
  * JSON files get additional syntax highlighting via highlight.js.
  * @param {object}   props
  * @param {string}   props.diff
  * @param {object|null} props.selectedFile
  * @param {()=>void} props.onOpenAraxis
  * @param {boolean}  props.blameOn
- * @param {object[]} props.blameData   - parsed blame lines from parseBlame()
+ * @param {object[]} props.blameData        - parsed blame lines from parseBlame()
  * @param {()=>void} props.onToggleBlame
  * @param {(hash:string, summary:string)=>void} props.onBlameHashClick
+ * @param {{hash:string, summary:string}|null} props.commitView
+ * @param {string}   props.commitDiff       - raw git show output
+ * @param {()=>void} props.onClearCommitView
  */
-export default function DiffViewer({ diff, selectedFile, onOpenAraxis, blameOn, blameData, onToggleBlame, onBlameHashClick }) {
-  const diffRef = useRef(null)
+export default function DiffViewer({
+  diff, selectedFile, onOpenAraxis,
+  blameOn, blameData, onToggleBlame, onBlameHashClick,
+  commitView, commitDiff, onClearCommitView,
+}) {
+  const diffRef       = useRef(null)
+  const commitDiffRef = useRef(null)
 
   const diffHtml = useMemo(() => {
     if (!diff) return ''
     return toDiffHtml(diff, { drawFileList: false, matching: 'lines', outputFormat: 'line-by-line' })
   }, [diff])
 
+  const commitDiffHtml = useMemo(() => {
+    if (!commitDiff) return ''
+    return toDiffHtml(commitDiff, { drawFileList: false, matching: 'lines', outputFormat: 'line-by-line' })
+  }, [commitDiff])
+
+  // JSON syntax highlighting for file diffs
   useEffect(() => {
     if (!diffRef.current || !selectedFile) return
     const ext = selectedFile.path.split('.').pop()?.toLowerCase()
@@ -66,6 +80,37 @@ export default function DiffViewer({ diff, selectedFile, onOpenAraxis, blameOn, 
       hljs.highlightElement(el)
     })
   }, [diffHtml, selectedFile])
+
+  const [hashCopied, setHashCopied] = useState(false)
+
+  const copyHash = () => {
+    navigator.clipboard.writeText(commitView?.hash ?? '')
+    setHashCopied(true)
+    setTimeout(() => setHashCopied(false), 1500)
+  }
+
+  // Commit view
+  if (commitView) {
+    return (
+      <div className="diff-viewer">
+        <div className="diff-header">
+          <button className="back-btn" onClick={onClearCommitView} title="Back to file diff">← Back</button>
+          <span
+            className={`diff-filename commit-hash-btn${hashCopied ? ' commit-hash-btn--copied' : ''}`}
+            onClick={copyHash}
+            title="Click to copy hash"
+          >
+            {hashCopied ? 'Copied!' : commitView.hash}
+          </span>
+          <span className="commit-summary">{commitView.summary}</span>
+        </div>
+        {commitDiffHtml
+          ? <div ref={commitDiffRef} className="diff-content diff-content--commit" dangerouslySetInnerHTML={{ __html: commitDiffHtml }} />
+          : <div className="diff-viewer diff-viewer--empty"><span className="diff-placeholder">No diff available</span></div>
+        }
+      </div>
+    )
+  }
 
   if (!selectedFile) {
     return (

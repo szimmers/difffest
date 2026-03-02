@@ -211,10 +211,16 @@ export default function App() {
   }, [])
 
   // ─── Git action handlers ─────────────────────────────────────────────────────
-  const handleFileMenu = useCallback(async (filePath) => {
-    const result = await window.api.showFileMenu(activeRepo.path, filePath)
+  const handleFileMenu = useCallback(async (filePath, status) => {
+    const result = await window.api.showFileMenu(activeRepo.path, filePath, status)
     if (result === 'gitignore') {
-      showToast('success', `Added to .gitignore`)
+      showToast('success', 'Added to .gitignore')
+      await refreshStatus(activeRepo)
+    } else if (result === 'delete') {
+      showToast('success', 'File deleted')
+      await refreshStatus(activeRepo)
+    } else if (result === 'revert') {
+      showToast('success', 'Changes reverted')
       await refreshStatus(activeRepo)
     } else if (result?.error) {
       showToast('error', result.error)

@@ -3,7 +3,7 @@ function FileItem({ file, isStaged, isSelected, onSelect, onAction, onContextMen
     <div
       className={`file-item${isSelected ? ' file-item--selected' : ''}`}
       onClick={() => onSelect({ ...file, isStaged })}
-      onContextMenu={onContextMenu ? e => { e.preventDefault(); onContextMenu(file.path) } : undefined}
+      onContextMenu={onContextMenu ? e => { e.preventDefault(); onContextMenu(file.path, file.status) } : undefined}
     >
       <span className="file-status" data-s={file.status}>{file.status}</span>
       <span className="file-path" title={file.path}>{file.path}</span>

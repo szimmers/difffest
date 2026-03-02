@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import { join, basename } from 'path'
-import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { execFile } from 'child_process'
 import { simpleGit } from 'simple-git'
@@ -285,35 +285,80 @@ ipcMain.handle('git:openAraxis', async (_, repoPath, filePath, staged) => {
 // ─── IPC: File context menu ───────────────────────────────────────────────────
 
 /**
- * Shows a native context menu for a file.
- * Resolves with 'gitignore' if the user chose that action, null if dismissed,
- * or { error } on failure.
+ * Shows a native context menu for an unstaged file.
+ * Untracked files ('?') get "Delete File"; tracked files get "Revert Changes".
+ * Resolves with 'gitignore' | 'delete' | 'revert' | null | { error }.
  * @param {string} repoPath
  * @param {string} filePath - repo-relative path
+ * @param {string} status   - git status character ('?', 'M', etc.)
  */
-ipcMain.handle('git:fileMenu', (_, repoPath, filePath) => {
+ipcMain.handle('git:fileMenu', (_, repoPath, filePath, status) => {
   return new Promise(resolve => {
-    const menu = Menu.buildFromTemplate([
-      {
-        label: 'Add to .gitignore',
-        click: () => {
-          try {
-            const gitignorePath = join(repoPath, '.gitignore')
-            let existing = ''
-            try { existing = readFileSync(gitignorePath, 'utf-8') } catch { /* no file yet */ }
-            const lines = existing.split('\n').map(l => l.trim())
-            if (!lines.includes(filePath)) {
-              const prefix = existing.length > 0 && !existing.endsWith('\n') ? '\n' : ''
-              appendFileSync(gitignorePath, prefix + filePath + '\n')
-            }
-            resolve('gitignore')
-          } catch (err) {
-            resolve({ error: err.message })
+    const isUntracked = status === '?'
+    let handled = false
+    const done = (value) => { handled = true; resolve(value) }
+
+    const addToGitignore = {
+      label: 'Add to .gitignore',
+      click: () => {
+        handled = true
+        try {
+          const gitignorePath = join(repoPath, '.gitignore')
+          let existing = ''
+          try { existing = readFileSync(gitignorePath, 'utf-8') } catch { /* no file yet */ }
+          const lines = existing.split('\n').map(l => l.trim())
+          if (!lines.includes(filePath)) {
+            const prefix = existing.length > 0 && !existing.endsWith('\n') ? '\n' : ''
+            appendFileSync(gitignorePath, prefix + filePath + '\n')
           }
-        },
+          done('gitignore')
+        } catch (err) {
+          done({ error: err.message })
+        }
       },
-    ])
-    menu.popup({ window: mainWindow, callback: () => resolve(null) })
+    }
+
+    const deleteFile = {
+      label: 'Delete File',
+      click: async () => {
+        handled = true
+        const { response } = await dialog.showMessageBox(mainWindow, {
+          type: 'warning',
+          buttons: ['Delete', 'Cancel'],
+          defaultId: 1,
+          message: `Delete ${filePath}?`,
+          detail: 'This file is untracked and cannot be recovered.',
+        })
+        if (response !== 0) { done(null); return }
+        try {
+          rmSync(join(repoPath, filePath), { recursive: true, force: true })
+          done('delete')
+        } catch (err) {
+          done({ error: err.message })
+        }
+      },
+    }
+
+    const revertChanges = {
+      label: 'Revert Changes',
+      click: async () => {
+        handled = true
+        try {
+          const git = simpleGit(repoPath)
+          await git.checkout(['--', filePath])
+          done('revert')
+        } catch (err) {
+          done({ error: err.message })
+        }
+      },
+    }
+
+    const template = isUntracked
+      ? [addToGitignore, deleteFile]
+      : [addToGitignore, revertChanges]
+
+    const menu = Menu.buildFromTemplate(template)
+    menu.popup({ window: mainWindow, callback: () => { if (!handled) resolve(null) } })
   })
 })
 

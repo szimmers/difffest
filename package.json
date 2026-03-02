@@ -1,0 +1,23 @@
+{
+  "name": "difffest",
+  "version": "1.0.0",
+  "description": "Multi-repo git diff viewer",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "diff2html": "^3.4.48",
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.3.0",
+    "electron-vite": "^2.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

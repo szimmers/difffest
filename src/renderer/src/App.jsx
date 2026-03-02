@@ -255,7 +255,13 @@ export default function App() {
     setBusy(true)
     try {
       const result = await window.api.commit(activeRepo.path, commitMessage)
-      if (result.ok) { setCommitMessage(''); showToast('success', 'Committed'); await refreshStatus(activeRepo) }
+      if (result.ok) {
+        setCommitMessage('')
+        showToast('success', 'Committed')
+        setCommitView(null)
+        setCommitDiff('')
+        await refreshStatus(activeRepo)
+      }
       else showToast('error', result.error)
     } finally { setBusy(false) }
   }, [activeRepo, commitMessage, status.staged.length, showToast, refreshStatus])
@@ -264,8 +270,14 @@ export default function App() {
     setBusy(true)
     try {
       const result = await window.api.push(activeRepo.path)
-      if (result.ok) { showToast('success', 'Pushed to origin'); await refreshStatus(activeRepo) }
-      else showToast('error', result.error)
+      if (result.ok) {
+        showToast('success', 'Pushed to origin')
+        setCommitView(null)
+        setCommitDiff('')
+        await refreshStatus(activeRepo)
+      } else {
+        showToast('error', result.error)
+      }
     } finally { setBusy(false) }
   }, [activeRepo, showToast, refreshStatus])
 

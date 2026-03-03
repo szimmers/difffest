@@ -1,16 +1,20 @@
-# Difffest
+# multi-git-diff
 
 A macOS desktop app for reviewing and committing git changes across multiple repositories.
 
 ## Features
 
-- **Multi-repo sidebar** — manage any number of repos; switch with ⌘1–4
+- **Multi-repo sidebar** — manage any number of repos; switch with ⌘1–9; drag to reorder
+- **Branch & sync status** — shows current branch, ahead (↑) and behind (↓) commit counts
 - **Staged / Unstaged file lists** — stage, unstage, or bulk stage/unstage with one click
+- **File status badges** — color-coded M/A/D/R/C/U/? indicators for every file
 - **Diff viewer** — unified line-by-line diff with syntax highlighting (JSON supported)
-- **Git blame** — toggle per-line authorship view
-- **Commit & Push** — separate commit and push actions
+- **Git blame** — toggle per-line authorship (author, hash, relative date)
+- **Commit view** — click any blame hash to see the full commit diff; click hash to copy
+- **Stash support** — stash all or selected files; view stash diffs; pop from sidebar
+- **Commit & Push** — separate commit, push, pull, and merge-main actions with live counts
 - **Araxis Merge integration** — open any diff in Araxis for a full side-by-side view
-- **Add to .gitignore** — right-click any unstaged file to ignore it
+- **File context menu** — right-click to add to .gitignore, delete untracked files, or revert changes
 - **Auto-advance** — after staging a file, the next unstaged file is auto-selected
 - **Resizable columns** — drag dividers between sidebar, file list, and diff pane
 - **Live updates** — file watcher auto-refreshes status when the git index changes
@@ -54,12 +58,12 @@ npm run build
 |---|---|
 | ⌘1–9 | Switch to repo 1–9 |
 | ⌘R | Refresh active repo status |
-| ⌘↵ | Commit staged changes |
+| ⌘↵ | Commit staged changes (from commit message box) |
 
 ## Workspace Storage
 
 Repositories are persisted to:
 
 ```
-~/Library/Application Support/difffest/workspaces.json
+~/Library/Application Support/multi-git-diff/workspaces.json
 ```

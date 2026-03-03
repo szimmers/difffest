@@ -57,6 +57,7 @@ export default function DiffViewer({
   diff, selectedFile, onOpenAraxis,
   blameOn, blameData, onToggleBlame, onBlameHashClick,
   commitView, commitDiff, onClearCommitView,
+  stashView, stashDiff, onClearStashView, onStashPop, busy,
 }) {
   const diffRef       = useRef(null)
   const commitDiffRef = useRef(null)
@@ -70,6 +71,11 @@ export default function DiffViewer({
     if (!commitDiff) return ''
     return toDiffHtml(commitDiff, { drawFileList: false, matching: 'lines', outputFormat: 'line-by-line' })
   }, [commitDiff])
+
+  const stashDiffHtml = useMemo(() => {
+    if (!stashDiff) return ''
+    return toDiffHtml(stashDiff, { drawFileList: false, matching: 'lines', outputFormat: 'line-by-line' })
+  }, [stashDiff])
 
   // JSON syntax highlighting for file diffs
   useEffect(() => {
@@ -87,6 +93,31 @@ export default function DiffViewer({
     navigator.clipboard.writeText(commitView?.hash ?? '')
     setHashCopied(true)
     setTimeout(() => setHashCopied(false), 1500)
+  }
+
+  // Stash view
+  if (stashView) {
+    return (
+      <div className="diff-viewer">
+        <div className="diff-header">
+          <button className="back-btn" onClick={onClearStashView} title="Back">← Back</button>
+          <span className="diff-filename">{stashView.ref}</span>
+          <span className="commit-summary">{stashView.message}</span>
+          <button
+            className="btn btn--stash-pop"
+            onClick={() => onStashPop(stashView.ref)}
+            disabled={busy}
+            title="Apply and remove this stash (git stash pop)"
+          >
+            Pop
+          </button>
+        </div>
+        {stashDiffHtml
+          ? <div className="diff-content diff-content--commit" dangerouslySetInnerHTML={{ __html: stashDiffHtml }} />
+          : <div className="diff-viewer diff-viewer--empty"><span className="diff-placeholder">Empty stash</span></div>
+        }
+      </div>
+    )
   }
 
   // Commit view

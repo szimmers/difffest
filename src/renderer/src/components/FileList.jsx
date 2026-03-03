@@ -1,10 +1,20 @@
-function FileItem({ file, isStaged, isSelected, onSelect, onAction, onContextMenu }) {
+function FileItem({ file, isStaged, isSelected, onSelect, onAction, onContextMenu, stashSelected, onToggleStashSelect }) {
   return (
     <div
       className={`file-item${isSelected ? ' file-item--selected' : ''}`}
       onClick={() => onSelect({ ...file, isStaged })}
       onContextMenu={onContextMenu ? e => { e.preventDefault(); onContextMenu(file.path, file.status) } : undefined}
     >
+      {!isStaged && onToggleStashSelect && (
+        <input
+          type="checkbox"
+          className="file-check"
+          checked={stashSelected}
+          onChange={() => onToggleStashSelect(file.path)}
+          onClick={e => e.stopPropagation()}
+          title="Select for stashing"
+        />
+      )}
       <span className="file-status" data-s={file.status}>{file.status}</span>
       <span className="file-path" title={file.path}>{file.path}</span>
       <button
@@ -30,13 +40,20 @@ function FileItem({ file, isStaged, isSelected, onSelect, onAction, onContextMen
  * @param {(path:string)=>void} props.onUnstage
  * @param {()=>void}   props.onStageAll
  * @param {()=>void}   props.onUnstageAll
- * @param {(path:string)=>void} props.onFileMenu - triggered by right-click on unstaged files
+ * @param {(path:string, status:string)=>void} props.onFileMenu - triggered by right-click on unstaged files
+ * @param {Set<string>} props.stashSelection - file paths selected for stashing
+ * @param {(path:string)=>void} props.onToggleStashSelect
  * @param {object}     props.style - passed to the root element for resizable width
  */
 export default function FileList({
   staged, unstaged, selectedFile,
-  onSelectFile, onStage, onUnstage, onStageAll, onUnstageAll, onFileMenu, style,
+  onSelectFile, onStage, onUnstage, onStageAll, onUnstageAll, onFileMenu,
+  stashSelection, onToggleStashSelect, onStash, onStageSelected, style,
 }) {
+  const selCount   = stashSelection?.size ?? 0
+  const canStash   = selCount > 0 || staged.length > 0 || unstaged.length > 0
+  const stashLabel = selCount > 0 ? `Stash (${selCount})` : 'Stash All'
+  const stageLabel = selCount > 0 ? `Stage (${selCount})` : 'Stage All'
   return (
     <div className="file-list" style={style}>
       {/* Staged */}
@@ -68,9 +85,21 @@ export default function FileList({
       <div className="file-section">
         <div className="file-section__header">
           <span>Unstaged <span className="count">({unstaged.length})</span></span>
-          {unstaged.length > 0 && (
-            <button className="section-btn" onClick={onStageAll}>Stage All</button>
-          )}
+          <div style={{ display: 'flex', gap: 4 }}>
+            {canStash && (
+              <button className="section-btn section-btn--stash" onClick={onStash}
+                title={selCount > 0 ? `Stash the ${selCount} checked file(s)` : 'Stash all staged and unstaged changes'}>
+                {stashLabel}
+              </button>
+            )}
+            {unstaged.length > 0 && (
+              <button className="section-btn"
+                onClick={selCount > 0 ? onStageSelected : onStageAll}
+                title={selCount > 0 ? `Stage the ${selCount} checked file(s)` : 'Stage all unstaged files'}>
+                {stageLabel}
+              </button>
+            )}
+          </div>
         </div>
         <div className="file-section__body">
           {unstaged.length === 0
@@ -84,6 +113,8 @@ export default function FileList({
                 onSelect={onSelectFile}
                 onAction={onStage}
                 onContextMenu={onFileMenu}
+                stashSelected={stashSelection?.has(file.path) ?? false}
+                onToggleStashSelect={onToggleStashSelect}
               />
             ))
           }

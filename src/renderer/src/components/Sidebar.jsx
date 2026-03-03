@@ -3,6 +3,7 @@ import { useState } from 'react'
 /**
  * Left sidebar listing all workspaces with branch and ahead/behind indicators.
  * Repos can be reordered by dragging.
+ * Below the repo list, shows the stash list for the active repo.
  * @param {object}     props
  * @param {object[]}   props.repos
  * @param {object|null} props.activeRepo
@@ -12,9 +13,11 @@ import { useState } from 'react'
  * @param {()=>void}   props.onAddWorkspace
  * @param {(path:string)=>void} props.onRemoveWorkspace
  * @param {(fromIndex:number, toIndex:number)=>void} props.onReorder
+ * @param {{ ref: string, message: string }[]} props.stashList
+ * @param {(ref:string, message:string)=>void} props.onStashClick
  * @param {object}     props.style - passed to the root element for resizable width
  */
-export default function Sidebar({ repos, activeRepo, repoBranches, onSelectRepo, onRefresh, onAddWorkspace, onRemoveWorkspace, onReorder, style }) {
+export default function Sidebar({ repos, activeRepo, repoBranches, onSelectRepo, onRefresh, onAddWorkspace, onRemoveWorkspace, onReorder, stashList, onStashClick, style }) {
   const [dragIndex, setDragIndex]       = useState(null)
   const [dragOverIndex, setDragOverIndex] = useState(null)
 
@@ -72,6 +75,27 @@ export default function Sidebar({ repos, activeRepo, repoBranches, onSelectRepo,
           )
         })}
       </ul>
+
+      {stashList.length > 0 && (
+        <div className="stash-section">
+          <div className="stash-section__header">
+            Stashes <span className="count">({stashList.length})</span>
+          </div>
+          <ul className="stash-list">
+            {stashList.map(entry => (
+              <li
+                key={entry.ref}
+                className="stash-item"
+                title={`${entry.ref}: ${entry.message}\nClick to preview`}
+                onClick={() => onStashClick(entry.ref, entry.message)}
+              >
+                <span className="stash-item__ref">{entry.ref}</span>
+                <span className="stash-item__msg">{entry.message}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </aside>
   )
 }

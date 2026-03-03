@@ -258,6 +258,67 @@ ipcMain.handle('git:pullMain', async (_, repoPath) => {
   }
 })
 
+// ─── IPC: Stash ──────────────────────────────────────────────────────────────
+
+/**
+ * Stashes changes. If filePaths is provided, stashes only those files.
+ * @param {string}   repoPath
+ * @param {string[]} [filePaths] - repo-relative paths to stash selectively
+ */
+ipcMain.handle('git:stash', async (_, repoPath, filePaths) => {
+  try {
+    const git = simpleGit(repoPath)
+    const args = filePaths?.length ? ['push', '--', ...filePaths] : []
+    await git.stash(args)
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
+/** Returns the patch for a single stash entry (git stash show -p <ref>). */
+ipcMain.handle('git:stashShow', async (_, repoPath, ref) => {
+  try {
+    const git = simpleGit(repoPath)
+    const raw = await git.raw(['stash', 'show', '-p', ref])
+    return { ok: true, raw }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
+/** Returns the stash list for a repo. */
+ipcMain.handle('git:stashList', async (_, repoPath) => {
+  try {
+    const git = simpleGit(repoPath)
+    const raw = await git.raw(['stash', 'list'])
+    const entries = raw.trim()
+      ? raw.trim().split('\n').map(line => {
+          const m = line.match(/^(stash@\{\d+\}):\s*(.+)$/)
+          return m ? { ref: m[1], message: m[2] } : { ref: line, message: line }
+        })
+      : []
+    return { ok: true, entries }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
+/**
+ * Pops a specific stash entry.
+ * @param {string} repoPath
+ * @param {string} ref - e.g. 'stash@{0}'
+ */
+ipcMain.handle('git:stashPop', async (_, repoPath, ref) => {
+  try {
+    const git = simpleGit(repoPath)
+    await git.stash(['pop', ref ?? 'stash@{0}'])
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
 // ─── IPC: Open in Araxis ─────────────────────────────────────────────────────
 
 /**
@@ -421,6 +482,7 @@ ipcMain.handle('git:watch', (_, repoPath) => {
       join(repoPath, '.git/index'),
       join(repoPath, '.git/HEAD'),
       join(repoPath, '.git/COMMIT_EDITMSG'),
+      join(repoPath, '.git/refs/stash'),
     ],
     { ignoreInitial: true }
   )

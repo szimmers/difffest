@@ -66,6 +66,10 @@ export default function App() {
   const [busy, setBusy]                 = useState(false)
   const [toast, setToast]               = useState(null)
   const [errorModal, setErrorModal]     = useState(null)  // string | null
+  const [stashSelection, setStashSelection] = useState(new Set())
+  const [stashList, setStashList]       = useState([])
+  const [stashView, setStashView]       = useState(null)  // { ref, message }
+  const [stashDiff, setStashDiff]       = useState('')
   const [sidebarWidth, setSidebarWidth] = useState(200)
   const [filelistWidth, setFilelistWidth] = useState(290)
   const [isResizing, setIsResizing]     = useState(false)
@@ -83,6 +87,12 @@ export default function App() {
    * @param {{ path: string }} repo
    * @returns {Promise<object|null>} The new status object, or null if no repo.
    */
+  const refreshStashList = useCallback(async (repo) => {
+    if (!repo) return
+    const result = await window.api.stashList(repo.path)
+    if (result?.ok) setStashList(result.entries)
+  }, [])
+
   const refreshStatus = useCallback(async (repo) => {
     if (!repo) return null
     const s = await window.api.getStatus(repo.path)
@@ -136,13 +146,18 @@ export default function App() {
     setSelectedFile(null)
     setDiff('')
     setBlameData([])
+    setStashSelection(new Set())
     refreshStatus(activeRepo)
+    refreshStashList(activeRepo)
     window.api.watch(activeRepo.path)
     const off = window.api.onChanged(repoPath => {
-      if (repoPath === activeRepo.path) refreshStatus(activeRepo)
+      if (repoPath === activeRepo.path) {
+        refreshStatus(activeRepo)
+        refreshStashList(activeRepo)
+      }
     })
     return () => { window.api.unwatch(activeRepo.path); off() }
-  }, [activeRepo, refreshStatus])
+  }, [activeRepo, refreshStatus, refreshStashList])
 
   // Diff
   useEffect(() => {
@@ -186,6 +201,8 @@ export default function App() {
   const handleSelectFile = useCallback((file) => {
     setCommitView(null)
     setCommitDiff('')
+    setStashView(null)
+    setStashDiff('')
     setSelectedFile(file)
   }, [])
 
@@ -231,6 +248,7 @@ export default function App() {
 
   const handleStage = useCallback(async (filePath) => {
     const currentIndex = status.unstaged.findIndex(f => f.path === filePath)
+    setStashSelection(prev => { const next = new Set(prev); next.delete(filePath); return next })
     await window.api.stage(activeRepo.path, [filePath])
     const newStatus = await refreshStatus(activeRepo)
     const unstaged = newStatus?.unstaged ?? []
@@ -251,6 +269,13 @@ export default function App() {
     await window.api.stageAll(activeRepo.path)
     await refreshStatus(activeRepo)
   }, [activeRepo, refreshStatus])
+
+  const handleStageSelected = useCallback(async () => {
+    const paths = [...stashSelection]
+    await window.api.stage(activeRepo.path, paths)
+    setStashSelection(new Set())
+    await refreshStatus(activeRepo)
+  }, [activeRepo, stashSelection, refreshStatus])
 
   const handleUnstageAll = useCallback(async () => {
     await window.api.unstageAll(activeRepo.path)
@@ -303,6 +328,57 @@ export default function App() {
     } finally { setBusy(false) }
   }, [activeRepo, showToast, refreshStatus])
 
+  const handleToggleStashSelect = useCallback((filePath) => {
+    setStashSelection(prev => {
+      const next = new Set(prev)
+      if (next.has(filePath)) next.delete(filePath)
+      else next.add(filePath)
+      return next
+    })
+  }, [])
+
+  const handleStash = useCallback(async () => {
+    setBusy(true)
+    try {
+      const paths = stashSelection.size > 0 ? [...stashSelection] : undefined
+      const result = await window.api.stash(activeRepo.path, paths)
+      if (result.ok) {
+        setStashSelection(new Set())
+        showToast('success', paths ? `Stashed ${paths.length} file(s)` : 'All changes stashed')
+        await refreshStatus(activeRepo)
+        await refreshStashList(activeRepo)
+      } else {
+        setErrorModal(result.error)
+      }
+    } finally { setBusy(false) }
+  }, [activeRepo, stashSelection, showToast, refreshStatus, refreshStashList])
+
+  const handleStashClick = useCallback(async (ref, message) => {
+    const result = await window.api.stashShow(activeRepo.path, ref)
+    if (!result?.ok) { showToast('error', result?.error || 'Could not load stash'); return }
+    setCommitView(null)
+    setCommitDiff('')
+    setSelectedFile(null)
+    setStashView({ ref, message })
+    setStashDiff(result.raw)
+  }, [activeRepo, showToast])
+
+  const handleStashPop = useCallback(async (ref) => {
+    setBusy(true)
+    try {
+      const result = await window.api.stashPop(activeRepo.path, ref)
+      if (result.ok) {
+        showToast('success', 'Stash applied')
+        setStashView(null)
+        setStashDiff('')
+        await refreshStatus(activeRepo)
+        await refreshStashList(activeRepo)
+      } else {
+        setErrorModal(result.error)
+      }
+    } finally { setBusy(false) }
+  }, [activeRepo, showToast, refreshStatus, refreshStashList])
+
   const handlePullMain = useCallback(async () => {
     setBusy(true)
     try {
@@ -344,6 +420,8 @@ export default function App() {
         onAddWorkspace={handleAddWorkspace}
         onRemoveWorkspace={handleRemoveWorkspace}
         onReorder={handleReorderRepos}
+        stashList={stashList}
+        onStashClick={handleStashClick}
         style={{ width: sidebarWidth }}
       />
 
@@ -359,6 +437,10 @@ export default function App() {
         onStageAll={handleStageAll}
         onUnstageAll={handleUnstageAll}
         onFileMenu={handleFileMenu}
+        stashSelection={stashSelection}
+        onToggleStashSelect={handleToggleStashSelect}
+        onStash={handleStash}
+        onStageSelected={handleStageSelected}
         style={{ width: filelistWidth }}
       />
 
@@ -376,6 +458,11 @@ export default function App() {
           commitView={commitView}
           commitDiff={commitDiff}
           onClearCommitView={() => { setCommitView(null); setCommitDiff('') }}
+          stashView={stashView}
+          stashDiff={stashDiff}
+          onClearStashView={() => { setStashView(null); setStashDiff('') }}
+          onStashPop={handleStashPop}
+          busy={busy}
         />
         <CommitPanel
           message={commitMessage}

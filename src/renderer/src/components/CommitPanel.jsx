@@ -1,11 +1,12 @@
 /**
- * Commit message input, Commit button, Push button, and Pull button.
+ * Commit message input, Commit / Push / Pull / Merge-main / Stash buttons.
  * @param {object} props
  * @param {string}   props.message
  * @param {(s:string)=>void} props.onMessageChange
  * @param {()=>void} props.onCommit
  * @param {()=>void} props.onPush
  * @param {()=>void} props.onPull
+ * @param {()=>void} props.onPullMain
  * @param {boolean}  props.busy        - disables all controls while a git op is in flight
  * @param {number}   props.stagedCount - number of staged files; shown on Commit button
  * @param {number}   props.ahead       - unpushed commits; shown on Push button

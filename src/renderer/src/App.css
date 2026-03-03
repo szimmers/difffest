@@ -159,6 +159,60 @@ body {
 .ahead  { font-size: 10px; color: var(--green); }
 .behind { font-size: 10px; color: var(--red); }
 
+/* ─── Stash list (sidebar) ─────────────────────────────────────────────────── */
+.stash-section {
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stash-section__header {
+  padding: 7px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--subtext);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stash-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.stash-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.stash-item:last-child { border-bottom: none; }
+.stash-item:hover { background: var(--surface2); }
+
+.stash-item__ref {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.stash-item__msg {
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ─── File list ────────────────────────────────────────────────────────────── */
 .file-list {
   width: var(--filelist-w);
@@ -207,10 +261,19 @@ body {
   transition: color 0.1s, border-color 0.1s;
 }
 .section-btn:hover { color: var(--accent); border-color: var(--accent); }
+.section-btn--stash:hover { color: var(--orange); border-color: var(--orange); }
 
 .file-section__body {
   overflow-y: auto;
   flex: 1;
+}
+
+.file-check {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 .file-item {
@@ -491,6 +554,11 @@ body {
 .btn--push:hover:not(:disabled)   { background: #156830; }
 .btn--pull   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 .btn--pull:hover:not(:disabled)   { border-color: var(--accent); color: var(--accent); }
+.btn--stash  { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn--stash:hover:not(:disabled)  { border-color: var(--orange); color: var(--orange); }
+.btn--stash-pop { background: var(--orange); color: #fff; border: none; border-radius: 4px; padding: 4px 12px; font-size: 11px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
+.btn--stash-pop:hover:not(:disabled) { opacity: 0.85; }
+.btn--stash-pop:disabled { opacity: 0.35; cursor: default; }
 
 /* ─── Toast ────────────────────────────────────────────────────────────────── */
 .toast {

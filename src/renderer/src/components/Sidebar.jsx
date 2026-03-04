@@ -77,12 +77,6 @@ export default function Sidebar({ repos, activeRepo, repoBranches, onSelectRepo,
         })}
       </ul>
 
-      <div className="sidebar__footer">
-        <button className="sidebar__settings-btn" onClick={onOpenSettings} title="External app settings">
-          <span className="sidebar__settings-gear">⚙</span><span>Settings</span>
-        </button>
-      </div>
-
       {stashList.length > 0 && (
         <div className="stash-section">
           <div className="stash-section__header">
@@ -103,6 +97,12 @@ export default function Sidebar({ repos, activeRepo, repoBranches, onSelectRepo,
           </ul>
         </div>
       )}
+
+      <div className="sidebar__footer">
+        <button className="sidebar__settings-btn" onClick={onOpenSettings} title="External app settings">
+          <span className="sidebar__settings-gear">⚙</span><span>Settings</span>
+        </button>
+      </div>
     </aside>
   )
 }

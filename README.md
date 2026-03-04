@@ -13,7 +13,7 @@ A macOS desktop app for reviewing and committing git changes across multiple rep
 - **Commit view** — click any blame hash to see the full commit diff; click hash to copy
 - **Stash support** — stash all or selected files; view stash diffs; pop from sidebar
 - **Commit & Push** — separate commit, push, pull, and merge-main actions with live counts
-- **Araxis Merge integration** — open any diff in Araxis for a full side-by-side view
+- **External app integrations** — open files in Sublime Text, WebStorm, or Araxis Merge; open repo in Sourcetree (configured via Settings)
 - **File context menu** — right-click to add to .gitignore, delete untracked files, or revert changes
 - **Auto-advance** — after staging a file, the next unstaged file is auto-selected
 - **Resizable columns** — drag dividers between sidebar, file list, and diff pane
@@ -41,7 +41,7 @@ A macOS desktop app for reviewing and committing git changes across multiple rep
 ## Prerequisites
 
 - Node.js 18+
-- macOS (uses `hiddenInset` titlebar; Araxis Merge optional)
+- macOS (uses `hiddenInset` titlebar)
 
 ## Setup
 

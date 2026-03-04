@@ -33,7 +33,7 @@ export default function Sidebar({ repos, activeRepo, repoBranches, onSelectRepo,
     <aside className="sidebar" style={style}>
       <div className="sidebar__header">
         <span className="sidebar__title">Repos</span>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <button className="refresh-btn" onClick={onRefresh} title="Refresh (⌘R)">⟳</button>
           <button className="refresh-btn" onClick={onAddWorkspace} title="Add workspace">+</button>
         </div>
@@ -78,7 +78,9 @@ export default function Sidebar({ repos, activeRepo, repoBranches, onSelectRepo,
       </ul>
 
       <div className="sidebar__footer">
-        <button className="sidebar__settings-btn" onClick={onOpenSettings} title="External app settings">⚙ Settings</button>
+        <button className="sidebar__settings-btn" onClick={onOpenSettings} title="External app settings">
+          <span className="sidebar__settings-gear">⚙</span><span>Settings</span>
+        </button>
       </div>
 
       {stashList.length > 0 && (
